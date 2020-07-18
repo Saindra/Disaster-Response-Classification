@@ -60,6 +60,9 @@ def clean_data(df):
     #append the cleaned categoies data back to input dataframe
     df=df.join(df_categories)
     
+    #fix
+    df.related=df.related.replace(2,1)
+    
     #drop duplicates
     df.drop_duplicates(inplace=True)
         
@@ -79,6 +82,7 @@ def save_data(df, database_filename):
     
      # Create sqlite engine and save the input dataframe to the database
     sql_engine = create_engine('sqlite:///{}'.format(database_filename))
+    print(df.shape[0])
     df.to_sql('disaster_messages', sql_engine, index=False, if_exists='replace')
     return  
 
