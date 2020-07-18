@@ -1,16 +1,86 @@
 import sys
+import pandas as pd
+from sqlalchemy import create_engine
+
 
 
 def load_data(messages_filepath, categories_filepath):
-    pass
+    
+    '''
+    INPUT:
+    messages_filepath - filepath to disaster_messages csv data
+    categories_filepath - filepath to categories_messages csv data
+    
+    OUTPUT:
+    df - a merged dataframe of disaster messages and categories data
+    
+    '''
+    
+    #read disaster_messages csv data
+    df_messages=pd.read_csv(messages_filepath)
+    
+    #read categories_messages csv data
+    df_categories=pd.read_csv(categories_filepath)
+    
+    #merge both the data
+    df=pd.merge(df_messages,df_categories,on='id')
+    
+    return df
 
 
 def clean_data(df):
-    pass
+    
+    '''
+    INPUT:
+    df - dataframe having disaster messages and its category data
+    
+    OUTPUT:
+    df - a cleaned dataframe after pre processing
+    
+    '''
+    #create a category dataframe based on the categories column in df
+    df_categories=df['categories'].str.split(';',expand=True)
+    
+    #finding new columns names for df_categories and replace the names
+    col_names=[x.split('-')[0] for x in df_categories.loc[0,:]]  
+    df_categories.columns=col_names
+    
+    #clean the data in df_categories dataframe
+    for column in df_categories:
+        
+        #set each value to be the last character of the string
+        df_categories[column] = [val.split('-')[1] for val in df_categories[column]]
+        
+        # convert column from string to numeric
+        df_categories[column] = [int(val) for val in df_categories[column]]
+        
+    #drop the categories column in input data frame
+    df.drop(columns='categories',inplace=True)
+    
+    #append the cleaned categoies data back to input dataframe
+    df=df.join(df_categories)
+    
+    #drop duplicates
+    df.drop_duplicates(inplace=True)
+        
+    return df
+
+
 
 
 def save_data(df, database_filename):
-    pass  
+    
+    '''
+    INPUT:
+    df - dataframe to be saved to database
+    database_filename - file path with name of the database
+
+    '''
+    
+     # Create sqlite engine and save the input dataframe to the database
+    sql_engine = create_engine('sqlite:///{}'.format(database_filename))
+    df.to_sql('disaster_messages', sql_engine, index=False, if_exists='replace')
+    return  
 
 
 def main():
